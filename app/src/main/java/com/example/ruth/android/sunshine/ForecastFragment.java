@@ -1,5 +1,6 @@
 package com.example.ruth.android.sunshine;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -34,6 +36,7 @@ import java.util.List;
  */
 public  class ForecastFragment extends Fragment {
 
+    private ArrayAdapter<String> mForecastAdapter = null;
     /*
     * constructor
     * */
@@ -50,6 +53,53 @@ public  class ForecastFragment extends Fragment {
         super.onCreate(savedInstanceState);
         //Add this line in order for this fragment to handle menu events
         setHasOptionsMenu(true);
+    }
+
+    /*
+    * @method onCreateView
+    * Second, this is executed
+    * */
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+            /*Creating the ArrayList with fake data*/
+        final List<String> weekForecast = new ArrayList<String>();
+        weekForecast.add("Today - Sunny - 88/66");
+        weekForecast.add("Tomorroy - Foggy - 70/40");
+        weekForecast.add("Weds - Cloudy - 72/63");
+        weekForecast.add("Thurs - Asteroids - 75/65");
+        weekForecast.add("Fri - Heavy Rain - 65/56");
+        weekForecast.add("Sat - HELP TRAPPED IN WEATHERSTATION - 60/51");
+        weekForecast.add("Sun - Sunny - 80/68");
+
+        /*Inicialize the adapter*/
+        mForecastAdapter = new ArrayAdapter<String>(
+                getActivity()
+                , R.layout.list_item_forecast
+                , R.id.list_item_forecast_textview
+                , weekForecast);
+
+        //Get a reference to the ListView,
+        ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
+        listView.setAdapter(mForecastAdapter);
+
+        //ItemClickListener and Toast
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String forecast = mForecastAdapter.getItem(position);
+                //Toast.makeText(getActivity(), forecast, Toast.LENGTH_SHORT).show();
+
+                Intent intent = new Intent(getActivity(), DetailActivity.class).putExtra(Intent.EXTRA_TEXT, forecast);
+                startActivity(intent);
+
+            }
+        });
+
+
+        return rootView;
     }
 
     @Override
@@ -72,39 +122,6 @@ public  class ForecastFragment extends Fragment {
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    /*
-    * @method onCreateView
-    * Second, this is executed
-    * */
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-            /*Creating the ArrayList with fake data*/
-        List<String> weekForecast = new ArrayList<String>();
-        weekForecast.add("Today - Sunny - 88/66");
-        weekForecast.add("Tomorroy - Foggy - 70/40");
-        weekForecast.add("Weds - Cloudy - 72/63");
-        weekForecast.add("Thurs - Asteroids - 75/65");
-        weekForecast.add("Fri - Heavy Rain - 65/56");
-        weekForecast.add("Sat - HELP TRAPPED IN WEATHERSTATION - 60/51");
-        weekForecast.add("Sun - Sunny - 80/68");
-
-        /*Inicialize the adapter*/
-        ArrayAdapter<String> mForecastAdapter = new ArrayAdapter<String>(
-                getActivity()
-                , R.layout.list_item_forecast
-                , R.id.list_item_forecast_textview
-                , weekForecast);
-
-        //Get a reference to the ListView,
-        ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
-        listView.setAdapter(mForecastAdapter);
-
-        return rootView;
     }
 
     /*Implemented AsyncTask*/
@@ -155,7 +172,7 @@ public  class ForecastFragment extends Fragment {
                 //http://api.openweathermap.org/data/2.5/forecast/daily?q=94043&mode=json&units=metric&cnt=7
                 URL url = new URL(builtUri.toString());
 
-                Log.v(LOG_TAG, "Built URI: "+ builtUri.toString());
+                //Log.v(LOG_TAG, "Built URI: "+ builtUri.toString());
 
                 // Create the request to OpenWeatherMap, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -185,7 +202,7 @@ public  class ForecastFragment extends Fragment {
                 }
                 forecastJsonStr = buffer.toString();
                 //Adding a verbose log statement to get the response of the server
-                Log.v(LOG_TAG, "Forecast JSON String: " + forecastJsonStr);
+                //Log.v(LOG_TAG, "Forecast JSON String: " + forecastJsonStr);
             } catch (IOException e) {
                 Log.e(LOG_TAG, "Error ", e);
                 // If the code didn't successfully get the weather data, there's no point in attempting
@@ -199,7 +216,7 @@ public  class ForecastFragment extends Fragment {
                     try {
                         reader.close();
                     } catch (final IOException e) {
-                        Log.e("PlaceholderFragment", "Error closing stream", e);
+                        Log.e(LOG_TAG, "Error closing stream", e);
                     }
                 }
             }
@@ -243,7 +260,6 @@ public  class ForecastFragment extends Fragment {
             return highLowStr;
         }
 
-        
         /**
          * Take the String representing the complete forecast in JSON Format and
          * pull out the data we need to construct the Strings needed for the wireframes.
@@ -314,14 +330,26 @@ public  class ForecastFragment extends Fragment {
                 resultStrs[i] = day + " - " + description + " - " + highAndLow;
             }
 
-            for (String s : resultStrs) {
-                Log.v(LOG_TAG, "Forecast entry: " + s);
-            }
+            //for (String s : resultStrs) {
+            //    Log.v(LOG_TAG, "Forecast entry: " + s);
+            //}
             return resultStrs;
 
         }
         //<!--End Lesson 2: JSON Parsing -->
 
+        @Override
+        protected void onPostExecute(String[] result) {
+            if(result != null)
+            {
+                mForecastAdapter.clear();
+                for (String dayForecastStr:result)
+                {
+                    mForecastAdapter.add(dayForecastStr);
+                }
+                //New data from the server should be displayed
+            }
+        }
     }//En of class FetchWeatherTask
 
 }//End of the class ForecastFragment
