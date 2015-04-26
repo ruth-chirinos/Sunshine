@@ -33,6 +33,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.ruth.android.sunshine.MainActivity" />
         </activity>
+
+        <!-- Content Provider -->
+        <provider android:authorities="com.example.ruth.android.app"
+            android:name=".data.WeatherProvider"/>
     </application>
 
 </manifest>
